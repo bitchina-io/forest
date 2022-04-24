@@ -106,18 +106,6 @@ pub(super) async fn start(config: Config) {
             .unwrap();
     }
 
-    // Start Prometheus server port
-    let prometheus_server_task = task::spawn(metrics::init_prometheus(
-        (format!("127.0.0.1:{}", config.metrics_port))
-            .parse()
-            .unwrap(),
-        PathBuf::from(&config.data_dir)
-            .join("db")
-            .into_os_string()
-            .into_string()
-            .expect("Failed converting the path to db"),
-    ));
-
     // Print admin token
     let ki = ks.get(JWT_IDENTIFIER).unwrap();
     let token = create_token(ADMIN.to_owned(), ki.private_key()).unwrap();
@@ -246,7 +234,6 @@ pub(super) async fn start(config: Config) {
     });
 
     // Cancel all async services
-    prometheus_server_task.cancel().await;
     sync_task.cancel().await;
     p2p_task.cancel().await;
     if let Some(task) = rpc_task {
